@@ -1,0 +1,30 @@
+{
+  "name": "memebot",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "paper": "MODE=paper tsx src/index.ts",
+    "live": "MODE=live tsx src/index.ts",
+    "replay": "tsx src/replay/backtest.ts",
+    "typecheck": "tsc --noEmit",
+    "ui": "tsx src/ui/server.ts",
+    "build:demo": "node scripts/build-demo.mjs"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.0",
+    "better-sqlite3": "^11.7.0",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "esbuild": "^0.28.2"
+  }
+}

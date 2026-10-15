@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>memebot desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --slate: #121a24; --pane: #18222e; --pane-2: #1e2a38; --rule: #263343;
+  --ink: #e4e9f0; --steel: #7d8a9c; --steel-2: #56637a;
+  --brass: #c8a464; --gain: #3db389; --loss: #e0644f; --caution: #d9a441; --focus: #8fb4ff;
+  --glow: rgba(61,179,137,.18); --scrim: rgba(5,9,14,.45); --on-loss: #ffffff;
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --tape: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --slate: #e9edf2; --pane: #f7f9fb; --pane-2: #eef2f6; --rule: #d6dde6;
+    --ink: #121b27; --steel: #5b687b; --steel-2: #8994a5;
+    --brass: #8f6a26; --gain: #13805a; --loss: #c0412c; --caution: #9a6a0c; --focus: #2f5fd0;
+    --glow: rgba(19,128,90,.16); --scrim: rgba(18,27,39,.3);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --slate: #e9edf2; --pane: #f7f9fb; --pane-2: #eef2f6; --rule: #d6dde6;
+  --ink: #121b27; --steel: #5b687b; --steel-2: #8994a5;
+  --brass: #8f6a26; --gain: #13805a; --loss: #c0412c; --caution: #9a6a0c; --focus: #2f5fd0;
+  --glow: rgba(19,128,90,.16); --scrim: rgba(18,27,39,.3);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--slate); }
+body { color: var(--ink); font: 400 14px/1.45 var(--sans); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.gain { color: var(--gain); } .loss { color: var(--loss); } .dim { color: var(--steel); }
+
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 0 64px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+
+/* bar */
+.bar { display: flex; align-items: center; gap: 14px; height: 64px; }
+.mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-stretch: 112%; font-size: 16px; }
+.glyph { width: 18px; height: 18px; border: 1.5px solid var(--brass); border-radius: 50%; position: relative; }
+.glyph::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--brass); }
+.status { color: var(--steel); font-size: 13px; display: inline-flex; align-items: center; gap: 7px; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--steel-2); }
+.status.running::before { background: var(--gain); box-shadow: 0 0 0 3px var(--glow); }
+.status.halted { color: var(--loss); } .status.halted::before { background: var(--loss); }
+.bar .right { margin-left: auto; display: flex; gap: 8px; }
+.badge { font-size: 12px; color: var(--brass); border: 1px solid var(--brass); border-radius: 3px; padding: 1px 7px; }
+.truth { color: var(--brass); margin-left: 6px; }
+.about { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; color: var(--steel); font-size: 13.5px; line-height: 1.6; }
+.about h3 { color: var(--ink); font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+.about p { margin: 0; max-width: 42ch; }
+.about b { color: var(--ink); font-weight: 500; }
+@media (max-width: 820px) { .about { grid-template-columns: 1fr; gap: 20px; } }
+
+.btn { height: 34px; padding: 0 14px; border: 1px solid var(--rule); background: var(--pane); border-radius: 5px; cursor: pointer; font-weight: 500; font-size: 13px; white-space: nowrap; }
+.btn:hover { border-color: var(--steel-2); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.primary { background: var(--ink); color: var(--slate); border-color: var(--ink); min-width: 84px; font-weight: 600; }
+.btn.warn { color: var(--loss); }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; }
+
+/* hero */
+.hero { padding: 36px 0 32px; border-bottom: 1px solid var(--rule); }
+.hero .label { color: var(--steel); font-size: 13px; }
+.hero .pnl { font-size: clamp(48px, 8vw, 76px); font-weight: 300; font-stretch: 125%; letter-spacing: -.04em; line-height: 1; margin: 10px 0 14px; }
+.hero .pnl .c { font-size: .45em; color: var(--steel); letter-spacing: -.01em; }
+.hero .sub { color: var(--steel); font-size: 14px; }
+.hero .sub b { color: var(--ink); font-weight: 500; }
+
+/* two lists */
+.cols2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 48px; padding-top: 28px; }
+@media (max-width: 820px) { .cols2 { grid-template-columns: 1fr; gap: 32px; } }
+h2 { text-wrap: balance; margin: 0 0 6px; font-size: 15px; font-weight: 600; font-stretch: 108%; display: flex; justify-content: space-between; align-items: baseline; }
+h2 .dim { font-weight: 400; font-size: 13px; }
+.empty { color: var(--steel); padding: 18px 0; max-width: 46ch; }
+
+.row { border-bottom: 1px solid var(--rule); }
+.row-main { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 18px; align-items: center; padding: 14px 0; cursor: pointer; width: 100%;
+  background: none; border: 0; text-align: left; }
+.sym { font-weight: 650; font-stretch: 108%; font-size: 15px; }
+.sym small { display: block; font-weight: 400; font-stretch: 100%; font-size: 12.5px; color: var(--steel); margin-top: 1px; }
+.sym small .busy { color: var(--brass); }
+.mult { font-size: 20px; font-weight: 500; font-stretch: 115%; letter-spacing: -.01em; min-width: 72px; text-align: right; }
+.pnlv { min-width: 84px; text-align: right; }
+.row-more { padding: 0 0 16px; display: grid; gap: 10px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 22px; color: var(--steel); font-size: 13px; }
+.facts b { color: var(--ink); font-weight: 500; }
+.why { color: var(--steel); font-size: 13px; }
+.why .hot { color: var(--loss); }
+.acts { display: flex; gap: 6px; }
+.chev { color: var(--steel-2); font-size: 12px; display: inline-block; transition: transform .15s; }
+.row.open .chev { transform: rotate(90deg); }
+
+.closed-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 18px; padding: 11px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.closed-row .sym { font-size: 14px; }
+.closed-row .m { color: var(--steel); min-width: 54px; text-align: right; }
+.closed-row .p { min-width: 84px; text-align: right; font-weight: 500; }
+
+/* activity */
+details.log { margin-top: 40px; border-top: 1px solid var(--rule); }
+details.log summary { cursor: pointer; color: var(--steel); padding: 14px 0; font-size: 13px; list-style: none; }
+details.log summary::-webkit-details-marker { display: none; }
+details.log summary::before { content: "▸"; display: inline-block; margin-right: 8px; transition: transform .15s; }
+details.log[open] summary::before { transform: rotate(90deg); }
+.tape { font: 12px/1.65 var(--tape); max-height: 320px; overflow: auto; color: var(--steel); }
+.tape div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+.tape .ts { color: var(--steel-2); }
+.tape .k-enter, .tape .k-buy { color: var(--brass); }
+.tape .k-sell, .tape .k-close { color: var(--ink); }
+.tape .k-error { color: var(--loss); }
+
+/* settings drawer */
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 19; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); background: var(--pane); border-left: 1px solid var(--rule);
+  z-index: 20; transform: translateX(100%); transition: transform .22s cubic-bezier(.2,.7,.2,1); display: flex; flex-direction: column; }
+.drawer.open { transform: none; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: calc(16px + env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) 16px 24px; border-bottom: 1px solid var(--rule); }
+.drawer-head h2 { margin: 0; font-size: 16px; }
+.drawer-body { overflow: auto; padding: 0 max(24px, env(safe-area-inset-right, 0px)) calc(32px + env(safe-area-inset-bottom, 0px)) 24px; }
+.grp { padding: 20px 0 12px; border-bottom: 1px solid var(--rule); }
+.grp h3 { margin: 0 0 10px; font-size: 13.5px; font-weight: 600; }
+.grp .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+details.adv summary { cursor: pointer; padding: 18px 0 6px; font-size: 13.5px; font-weight: 600; }
+details.adv h4 { margin: 16px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--steel); }
+.set { display: grid; grid-template-columns: 1fr 120px; gap: 10px; align-items: center; padding: 5px 0; }
+.set label { font-size: 13px; }
+.set label small { display: block; color: var(--steel); font-size: 12px; }
+.inp, .sel { width: 100%; height: 30px; background: var(--slate); border: 1px solid var(--rule); border-radius: 4px; padding: 0 8px; }
+.set.range { grid-template-columns: 1fr 100px 28px; }
+.set input[type=range] { width: 100%; accent-color: var(--brass); }
+.set .rv { text-align: right; color: var(--steel); font-size: 12.5px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 6px 0; cursor: pointer; }
+.check input { accent-color: var(--brass); }
+
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translate(-50%, 8px); background: var(--ink); color: var(--slate);
+  padding: 8px 14px; border-radius: 5px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .18s, transform .18s; pointer-events: none; z-index: 30; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.err { background: var(--loss); color: var(--on-loss); }
+@media (max-width: 520px) { .wrap { padding-block: 0 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } .status { display: none; } .mult { font-size: 17px; min-width: 60px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="mark"><span class="glyph" aria-hidden="true"></span>memebot</div>
+    <span class="badge">Simulation</span>
+    <span class="status" id="status">Paused</span>
+    <div class="right">
+      <button class="btn primary" id="runBtn">Start</button>
+      <button class="btn" id="settingsBtn">Settings</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="label">Profit this session</div>
+    <div class="pnl" id="pnl">$0<span class="c">.00</span></div>
+    <div class="sub" id="sub">Fake coins, fake money. The bot's real strategy code is running on them.</div>
+  </section>
+
+  <div class="cols2">
+    <section>
+      <h2>Holding <span class="dim" id="holdMeta"></span></h2>
+      <div id="book"></div>
+    </section>
+    <section>
+      <h2>Sold <span class="dim" id="soldMeta"></span></h2>
+      <div id="closed"></div>
+    </section>
+  </div>
+
+  <details class="log" id="logBox">
+    <summary>What the bot is doing</summary>
+    <div class="tape" id="tape"></div>
+  </details>
+
+  <section class="about" aria-label="How it works">
+    <div><h3>What it does</h3><p>Buys brand-new memecoins in the first minute after launch, while the market cap is a few thousand dollars, in small chunks that add up to 1 to 10 million tokens. Then it watches wallet activity to decide when to sell.</p></div>
+    <div><h3>How it decides</h3><p>It skips a launch if the <b>creator holds too much</b>, <b>linked wallets bought in the launch block</b>, or the creator is a <b>known rugger</b>. Once in, it sells on <b>creator selling</b>, <b>early buyers dumping</b> or <b>heavy sell pressure</b>, plus take-profit levels and stops.</p></div>
+    <div><h3>What's simulated</h3><p>The launchpad. Each fake coin secretly follows a script (real pump, rug, slow bleed, dud and others), shown in gold so you can check the bot's read. The bot code itself is the same code that will plug into pump.fun on Solana and PONS on Robinhood Chain.</p></div>
+  </section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Settings">
+  <div class="drawer-head"><h2>Settings</h2><button class="btn sm" id="closeDrawer">Done</button></div>
+  <div class="drawer-body" id="settings"></div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = (n, sign = false) => `${n < 0 ? "−" : sign && n > 0 ? "+" : ""}$${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const tone = n => n > 0.004 ? "gain" : n < -0.004 ? "loss" : "";
+const age = s => s < 60 ? `${s.toFixed(0)}s` : `${Math.floor(s / 60)}m ${String(Math.floor(s % 60)).padStart(2, "0")}s`;
+const clock = ts => new Date(ts).toLocaleTimeString([], { hour12: false });
+const TRUTH = { pump: "real pump", rug: "rug", bleed: "slow bleed", bundled: "bundled launch", serial: "repeat rugger", dud: "dud" };
+const truthTag = t => t ? ` <span class="truth">${esc(TRUTH[t] ?? t)}</span>` : "";
+const LOCAL = window.memebotLocal; // set by the in-browser demo build; absent when served by src/ui/server.ts
+
+let S = null;
+const expanded = new Set();
+let showTruth = !!LOCAL;
+let showSkips = !!LOCAL;
+
+async function api(path, body) {
+  if (LOCAL) {
+    try { return { ok: true, result: await LOCAL.call(path, body ?? {}) }; }
+    catch (e) { toast(e.message || "Request failed", true); return { ok: false, error: e.message }; }
+  }
+  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body ?? {}) });
+  const j = await r.json();
+  if (!j.ok) toast(j.error || "Request failed", true);
+  return j;
+}
+function toast(msg, err = false) {
+  const t = $("#toast"); t.textContent = msg; t.classList.toggle("err", err); t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function render() {
+  if (!S) return;
+  const T = S.totals;
+  $("#runBtn").textContent = S.sim.running ? "Pause" : "Start";
+  const st = $("#status");
+  st.className = `status ${T.killed ? "halted" : S.sim.running ? "running" : ""}`;
+  st.textContent = T.killed ? "Not buying (halted)" : S.sim.running ? "Running" : "Paused";
+
+  const unreal = S.positions.reduce((a, p) => a + p.valueUsd - p.costUsd, 0);
+  const total = T.realizedUsd + unreal;
+  const [whole, cents] = money(total, true).split(".");
+  $("#pnl").className = `pnl ${tone(total)}`;
+  $("#pnl").innerHTML = `${whole}<span class="c">.${cents}</span>`;
+  const n = T.wins + T.losses;
+  $("#sub").innerHTML = n || S.positions.length
+    ? `<b>${money(T.realizedUsd, true)}</b> locked in, <b>${money(unreal, true)}</b> on open positions${n ? `. Won <b>${T.wins} of ${n}</b> trades.` : "."}`
+    : "Fake coins, fake money. The bot's real strategy code is running on them.";
+
+  renderBook();
+  renderClosed();
+}
+
+function renderBook() {
+  const P = S.positions;
+  $("#holdMeta").textContent = P.length ? `${P.length} of ${S.config.risk.maxConcurrentPositions}` : "";
+  if (!P.length) {
+    $("#book").innerHTML = `<div class="empty">${S.sim.running ? "Watching new launches. Coins show up here when the bot buys." : "Press Start to let the bot trade."}</div>`;
+    return;
+  }
+  $("#book").innerHTML = P.map(p => {
+    const pnl = p.valueUsd - p.costUsd;
+    const building = p.status === "building";
+    const open = expanded.has(p.mint);
+    const firing = p.signals.filter(s => s.score >= 0.3).sort((a, b) => b.score - a.score);
+    const note = building ? `<span class="busy">buying in</span>` : age(p.ageSec);
+    return `<div class="row ${open ? "open" : ""}">
+      <button class="row-main" data-toggle="${p.mint}" aria-expanded="${open}">
+        <span class="sym">${esc(p.symbol)}<small>${note}${showTruth ? truthTag(p.truth) : ""}</small></span>
+        <span class="mult ${p.mult >= 1 ? "gain" : "loss"}">${p.mult.toFixed(2)}x</span>
+        <span class="pnlv ${tone(pnl)}">${money(pnl, true)} <span class="chev">▸</span></span>
+      </button>
+      ${open ? `<div class="row-more">
+        <div class="facts"><span>Paid <b>${money(p.costUsd)}</b></span><span>Worth <b>${money(p.valueUsd)}</b></span><span>Holding <b>${(p.tokens / 1e6).toFixed(2)}M</b></span><span><b>${p.fromHighPct.toFixed(0)}%</b> below its high</span></div>
+        <div class="why">${firing.length
+          ? `Sell pressure <span class="${p.score >= S.config.exit.signalSellThreshold * 0.6 ? "hot" : ""}">${p.score.toFixed(2)}</span> of ${S.config.exit.signalSellThreshold}: ${firing.map(s => esc(s.reason)).join(", ")}`
+          : "No sell warnings right now."}</div>
+        <div class="acts">
+          <button class="btn sm" data-sell="${p.mint}" data-frac="0.5" ${building ? "disabled" : ""}>Sell half</button>
+          <button class="btn sm warn" data-sell="${p.mint}" data-frac="1" ${building ? "disabled" : ""}>Sell all</button>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function renderClosed() {
+  const C = S.closed;
+  const net = C.reduce((a, c) => a + c.pnlUsd, 0);
+  $("#soldMeta").innerHTML = C.length ? `net <span class="${tone(net)}">${money(net, true)}</span>` : "";
+  if (!C.length) { $("#closed").innerHTML = `<div class="empty">Finished trades land here.</div>`; return; }
+  $("#closed").innerHTML = C.slice(0, 15).map(c => {
+    const truth = showTruth ? S.launches.find(l => l.mint === c.mint)?.truth : null;
+    return `<div class="closed-row">
+      <span class="sym">${esc(c.symbol)}<small>${esc(plainReason(c.reason))}${truthTag(truth)}</small></span>
+      <span class="m">${(c.outNative / c.costNative).toFixed(2)}x</span>
+      <span class="p ${tone(c.pnlUsd)}">${money(c.pnlUsd, true)}</span>
+    </div>`;
+  }).join("");
+}
+
+function plainReason(r) {
+  if (r.startsWith("hard stop")) return "stop-loss hit";
+  if (r.startsWith("trailing")) return "fell back from its high";
+  if (r.startsWith("signal")) return "sell warnings fired";
+  if (r.startsWith("time stop")) return "held too long";
+  if (r.startsWith("TP")) return "took profit";
+  return r;
+}
+
+// ---------- activity ----------
+const tape = $("#tape");
+function addLog(e) {
+  if (e.kind === "launch" || (e.kind === "reject" && !showSkips)) return;
+  const d = document.createElement("div");
+  d.className = `k-${e.kind}`;
+  d.innerHTML = `<span class="ts">${clock(e.ts)}</span><span>${esc(e.msg)}</span>`;
+  tape.prepend(d);
+  while (tape.children.length > 200) tape.lastChild.remove();
+}
+
+// ---------- settings ----------
+const MAIN = [
+  ["entry", "maxUsdPerToken", "Spend per coin", "USD"],
+  ["exit", "takeProfitLadder", "Take profit at", "multiple:share sold, e.g. 2:0.25, 4:0.25"],
+  ["exit", "hardStopPct", "Stop-loss", "% down from what you paid"],
+  ["exit", "trailingStopPct", "Sell if it falls from its high", "%, after first take-profit"],
+  ["exit", "maxHoldSec", "Max time holding", "seconds"],
+  ["risk", "maxConcurrentPositions", "Max coins at once"],
+];
+const ADV = {
+  "Buying": [["entry", "maxMcapUsd", "Max market cap", "USD"], ["entry", "maxAgeSec", "Max coin age", "seconds"], ["entry", "tranches", "Split each buy into"], ["entry", "trancheIntervalMs", "Gap between buys", "ms"]],
+  "Filters": [["filters", "maxDevHoldPct", "Max creator holding", "% of supply"], ["filters", "maxBundledPct", "Max bundled at launch", "% of supply"], ["filters", "blockFreshFundedDev", "Skip freshly funded creators"]],
+  "Limits": [["risk", "maxDailyLossUsd", "Daily loss limit", "USD"], ["risk", "maxOpenExposureUsd", "Max money in play", "USD"], ["exit", "signalSellThreshold", "Sell pressure that sells all", "0 to 1"]],
+};
+const ladderStr = l => l.map(([m, f]) => `${m}:${f}`).join(", ");
+const parseLadder = s => s.split(",").map(x => x.trim()).filter(Boolean).map(x => x.split(":").map(Number));
+
+function field([sec, key, label, unit]) {
+  const v = S.config[sec][key];
+  const id = `s-${sec}-${key}`;
+  let input;
+  if (typeof v === "boolean") input = `<select class="sel" id="${id}" data-sec="${sec}" data-key="${key}"><option value="true" ${v ? "selected" : ""}>Yes</option><option value="false" ${!v ? "selected" : ""}>No</option></select>`;
+  else if (key === "takeProfitLadder") input = `<input class="inp" type="text" id="${id}" data-sec="${sec}" data-key="${key}" value="${ladderStr(v)}">`;
+  else input = `<input class="inp" type="number" step="any" id="${id}" data-sec="${sec}" data-key="${key}" value="${v}">`;
+  return `<div class="set"><label for="${id}">${label}${unit ? `<small>${unit}</small>` : ""}</label>${input}</div>`;
+}
+
+function buildSettings() {
+  const sim = S.sim;
+  $("#settings").innerHTML = `
+    <div class="grp"><h3>Strategy</h3>${MAIN.map(field).join("")}</div>
+    <div class="grp"><h3>Controls</h3>
+      <div class="btns">
+        <button class="btn" data-act="kill">${S.totals.killed ? "Resume buying" : "Stop buying"}</button>
+        <button class="btn warn" data-act="sellall">Sell everything</button>
+        <button class="btn" data-act="reset">Reset session</button>
+      </div>
+    </div>
+    <div class="grp"><h3>Simulator</h3>
+      <div class="set"><label for="spd">Speed</label><select class="sel" id="spd">${[0.5, 1, 2, 4, 8].map(v => `<option value="${v}" ${v === sim.speed ? "selected" : ""}>${v}×</option>`).join("")}</select></div>
+      <div class="set"><label for="lpm">New coins per minute</label><input class="inp" type="number" id="lpm" min="0" max="120" value="${sim.launchesPerMin}"></div>
+      <div class="set"><label for="scn">Add a coin now</label><select class="sel" id="scn"><option value="">Random</option>${Object.keys(S.scenarios).map(k => `<option>${k}</option>`).join("")}</select></div>
+      <div class="btns" style="margin:6px 0 4px"><button class="btn" data-act="spawn">Add coin</button></div>
+      <label class="check"><input type="checkbox" id="truthCb" ${showTruth ? "checked" : ""}> Show what each coin really was</label>
+      <label class="check"><input type="checkbox" id="skipsCb" ${showSkips ? "checked" : ""}> Show skipped coins in activity</label>
+    </div>
+    <details class="adv"><summary>Advanced</summary>
+      ${Object.entries(ADV).map(([h, fs]) => `<h4>${h}</h4>${fs.map(field).join("")}`).join("")}
+      <h4>Sell warning weights</h4>
+      ${Object.entries(S.weights).map(([k, w]) => `<div class="set range"><label for="w-${k}">${k}</label><input type="range" id="w-${k}" min="0" max="1" step="0.05" value="${w}" data-sec="weights" data-key="${k}"><span class="rv">${w}</span></div>`).join("")}
+      <h4>Simulator coin mix</h4>
+      ${Object.entries(sim.weights).map(([k, w]) => `<div class="set range"><label for="m-${k}">${k}<small>${esc(S.scenarios[k])}</small></label><input type="range" id="m-${k}" min="0" max="5" step="1" value="${w}" data-scn="${k}"><span class="rv">${w}</span></div>`).join("")}
+    </details>`;
+}
+
+$("#settings").addEventListener("input", e => { if (e.target.type === "range") e.target.nextElementSibling.textContent = e.target.value; });
+$("#settings").addEventListener("change", async e => {
+  const t = e.target;
+  if (t.id === "spd") return api("/api/sim/settings", { speed: Number(t.value) });
+  if (t.id === "lpm") return api("/api/sim/settings", { launchesPerMin: Number(t.value) });
+  if (t.id === "truthCb") { showTruth = t.checked; return render(); }
+  if (t.id === "skipsCb") { showSkips = t.checked; return; }
+  if (t.dataset.scn) return api("/api/sim/settings", { weights: { [t.dataset.scn]: Number(t.value) } });
+  const { sec, key } = t.dataset;
+  if (!sec) return;
+  const value = key === "takeProfitLadder" ? parseLadder(t.value) : t.tagName === "SELECT" ? t.value === "true" : Number(t.value);
+  if ((await api("/api/config", { section: sec, key, value })).ok) toast("Saved");
+});
+$("#settings").addEventListener("click", async e => {
+  const a = e.target.closest("[data-act]")?.dataset.act;
+  if (!a) return;
+  if (a === "kill") { await api("/api/kill", { on: !S.totals.killed }); setTimeout(buildSettings, 600); }
+  if (a === "sellall") { await api("/api/sell-all"); toast("Selling everything"); }
+  if (a === "reset") { if ((await api("/api/reset")).ok) { tape.innerHTML = ""; expanded.clear(); toast("Session reset"); } }
+  if (a === "spawn") { const s = $("#scn").value; if ((await api("/api/sim/launch", { scenario: s || undefined })).ok) toast("Coin added"); }
+});
+
+function openDrawer(on) {
+  if (on) buildSettings();
+  $("#drawer").classList.toggle("open", on);
+  $("#scrim").classList.toggle("open", on);
+  if (on) $("#closeDrawer").focus();
+}
+$("#settingsBtn").onclick = () => openDrawer(true);
+$("#closeDrawer").onclick = () => openDrawer(false);
+$("#scrim").onclick = () => openDrawer(false);
+document.addEventListener("keydown", e => { if (e.key === "Escape") openDrawer(false); });
+$("#runBtn").onclick = () => api(S?.sim.running ? "/api/sim/stop" : "/api/sim/start");
+
+// list re-renders every 500ms, so act on pointerdown (and keyboard) rather than click
+function onBook(e) {
+  const sell = e.target.closest("[data-sell]");
+  if (sell) { if (!sell.disabled) api("/api/sell", { mint: sell.dataset.sell, fraction: Number(sell.dataset.frac) }); return; }
+  const tg = e.target.closest("[data-toggle]");
+  if (tg) { const m = tg.dataset.toggle; expanded.has(m) ? expanded.delete(m) : expanded.add(m); renderBook(); }
+}
+$("#book").addEventListener("pointerdown", onBook);
+$("#book").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBook(e); } });
+
+// ---------- stream ----------
+if (LOCAL) {
+  LOCAL.subscribe({
+    state: s => { S = s; render(); },
+    logs: l => { tape.innerHTML = ""; l.forEach(addLog); },
+    log: addLog,
+  });
+} else {
+  const es = new EventSource("/api/events");
+  es.addEventListener("state", m => { S = JSON.parse(m.data); render(); });
+  es.addEventListener("logs", m => { tape.innerHTML = ""; JSON.parse(m.data).forEach(addLog); });
+  es.addEventListener("log", m => addLog(JSON.parse(m.data)));
+  es.addEventListener("error", () => { $("#status").textContent = "Disconnected"; $("#status").className = "status halted"; });
+}
+</script>
+</body>
+</html>
