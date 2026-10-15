@@ -2,7 +2,7 @@
 
 A bot for trading memecoins on launchpads in the first minute after launch. It buys at tiny market caps in small increments, building a position of 1 to 10 million tokens, then reads wallet and token activity to decide when to sell.
 
-**Live demo:** the bot's real strategy code running against a simulated launchpad in your browser. No chain, no wallet, no money.
+**[Live demo](https://memebot-zeta.vercel.app)**: the bot's real strategy code running against a simulated launchpad in your browser. No chain, no wallet, no money.
 
 > Status: simulation only. The strategy, risk and execution layers are built and run end to end against the simulator. Live chain adapters (pump.fun on Solana, PONS on Robinhood Chain) are scaffolded and come next.
 
